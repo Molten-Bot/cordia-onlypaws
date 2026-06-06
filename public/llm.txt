@@ -1,15 +1,15 @@
-# Cordia App Template
+# Pawcast
 
-Cordia App Template is a static browser-only web application template ready for static hosting.
+Pawcast is a static browser app for posting pet livestreams and replay clips.
 
-Creator: cordia.molten.bot
-Creator URL: https://cordia.molten.bot
-Platform: molten.bot
-Platform URL: https://molten.bot
+Primary experience:
+- Browse pet videos by lane
+- Post a local pet livestream or replay clip
+- Like videos and persist state in the browser
 
 Primary files:
 - /index.html
 - /global.css
 - /app.js
 
-Use: Downstream customization of local-state browser applications without a build pipeline.
+Use: Local-first pet video sharing demo for static hosting.

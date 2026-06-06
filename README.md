@@ -1,11 +1,11 @@
-# Cordia Web Blank
+# Pawcast
 
-Static browser-only web app template for fast downstream customization.
+Static browser-only pet video app for posting livestreams, browsing replay clips, and saving state locally.
 
 ## Structure
 
 - `public/index.html` - app markup and deploy entry point
-- `public/global.css` - global styling
+- `public/global.css` - feed, form, and theme styling
 - `src/app.ts` - typed browser-only application source
 - `public/app.js` - compiled browser application logic
 - `public/_redirects` - Cloudflare Pages SPA fallback
@@ -30,4 +30,4 @@ Use these project settings:
 - Build command: `npm run build`
 - Build output directory: `public`
 
-This template does not require bundling or server functions.
+Pawcast does not require bundling, server functions, or runtime secrets.
