@@ -3,36 +3,64 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import {
-  addItem,
-  clearDoneItems,
+  addVideo,
   createDefaultState,
+  getVisibleVideos,
+  likeVideo,
   parseStoredState,
-  removeItem,
-  updateItem,
+  setSelectedKind,
 } from "../public/app.js";
 
 test("createDefaultState uses supplied id factory", () => {
   let nextId = 1;
-  const state = createDefaultState(() => `item-${nextId++}`);
+  const state = createDefaultState(() => `video-${nextId++}`);
 
   assert.deepEqual(
-    state.items.map((item) => item.id),
-    ["item-1", "item-2", "item-3"],
+    state.videos.map((video) => video.id),
+    ["video-1", "video-2", "video-3"],
   );
 });
 
 test("parseStoredState merges valid stored values with defaults", () => {
   const defaultState = createDefaultState(() => "default-id");
   const stored = JSON.stringify({
-    appName: "Typed Cordia",
+    appName: "Pet Room",
     theme: "dark",
-    items: [{ id: "stored-id", text: "Stored item", done: true }],
+    selectedKind: "dog",
+    videos: [
+      {
+        id: "stored-id",
+        title: "Stored clip",
+        petName: "Rocco",
+        petKind: "dog",
+        host: "Miles",
+        duration: "5 min",
+        description: "Stored video",
+        live: false,
+        likes: 3,
+        viewers: 12,
+      },
+    ],
   });
 
   assert.deepEqual(parseStoredState(stored, defaultState), {
-    appName: "Typed Cordia",
+    appName: "Pet Room",
     theme: "dark",
-    items: [{ id: "stored-id", text: "Stored item", done: true }],
+    selectedKind: "dog",
+    videos: [
+      {
+        id: "stored-id",
+        title: "Stored clip",
+        petName: "Rocco",
+        petKind: "dog",
+        host: "Miles",
+        duration: "5 min",
+        description: "Stored video",
+        live: false,
+        likes: 3,
+        viewers: 12,
+      },
+    ],
   });
 });
 
@@ -42,26 +70,41 @@ test("parseStoredState falls back when stored JSON is invalid", () => {
   assert.equal(parseStoredState("{", defaultState), defaultState);
 });
 
-test("item reducers add, update, remove, and clear items immutably", () => {
-  const state = {
-    appName: "Cordia",
-    theme: "system",
-    items: [
-      { id: "one", text: "One", done: false },
-      { id: "two", text: "Two", done: true },
-    ],
-  };
+test("video reducers add, like, and filter immutably", () => {
+  const state = createDefaultState(() => "seed");
+  const added = addVideo(
+    state,
+    {
+      title: "Tunnel dash",
+      petName: "Pepper",
+      petKind: "small-pet",
+      host: "Kai",
+      duration: "Live now",
+      description: "Fast laps through the cardboard course.",
+      live: true,
+    },
+    () => "new-video",
+  );
+  const liked = likeVideo(added, "new-video");
+  const filtered = setSelectedKind(liked, "small-pet");
 
-  const added = addItem(state, "Three", () => "three");
-  const updated = updateItem(added, "one", { done: true });
-  const removed = removeItem(updated, "two");
-  const cleared = clearDoneItems(removed);
-
-  assert.deepEqual(added.items[0], { id: "three", text: "Three", done: false });
-  assert.equal(state.items[0].done, false);
+  assert.deepEqual(added.videos[0], {
+    id: "new-video",
+    title: "Tunnel dash",
+    petName: "Pepper",
+    petKind: "small-pet",
+    host: "Kai",
+    duration: "Live now",
+    description: "Fast laps through the cardboard course.",
+    live: true,
+    likes: 0,
+    viewers: 1,
+  });
+  assert.equal(state.videos.length, 3);
+  assert.equal(liked.videos[0].likes, 1);
   assert.deepEqual(
-    cleared.items,
-    [{ id: "three", text: "Three", done: false }],
+    getVisibleVideos(filtered).map((video) => video.petName),
+    ["Pepper"],
   );
 });
 

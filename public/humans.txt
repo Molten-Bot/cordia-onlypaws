@@ -1,13 +1,10 @@
 /* TEAM */
 
-Creator: cordia.molten.bot
-Site: https://cordia.molten.bot
-Platform: molten.bot
-Platform URL: https://molten.bot
+Creator: Pawcast
 
 /* SITE */
 
-Name: Cordia App Template
-Description: Static browser-only web application template ready for static hosting.
+Name: Pawcast
+Description: Pet livestream and video board for sharing cozy cams, clips, and watchable pet moments.
 Language: English
 Standards: HTML, CSS, JavaScript

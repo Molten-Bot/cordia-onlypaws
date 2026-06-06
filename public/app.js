@@ -1,31 +1,78 @@
 // Google Analytics default capture for this template.
 // Future LLM edits: do not remove this gtag setup unless replacing it with equivalent page analytics capture.
 const googleAnalyticsId = "G-ZKTPLMMFDQ";
-const storageKey = "cordia-template-state";
-function createItem(text, done, idFactory) {
-    return { id: idFactory(), text, done };
+const storageKey = "pawcast-state";
+const petKinds = ["dog", "cat", "bird", "small-pet", "reptile"];
+function createVideo(video, idFactory) {
+    return { id: idFactory(), ...video };
 }
 export function createDefaultState(idFactory = () => crypto.randomUUID()) {
     return {
-        appName: "Cordia",
+        appName: "Pawcast",
         theme: "system",
-        items: [
-            createItem("Replace starter content", false, idFactory),
-            createItem("Add app-specific data model", false, idFactory),
-            createItem("Publish public folder to your hosting provider", true, idFactory),
+        selectedKind: "all",
+        videos: [
+            createVideo({
+                title: "Nap cam from sunny window",
+                petName: "Miso",
+                petKind: "cat",
+                host: "Lena",
+                duration: "Live now",
+                description: "Slow blinks, stretch breaks, and occasional commentary from the sill.",
+                live: true,
+                likes: 328,
+                viewers: 1240,
+            }, idFactory),
+            createVideo({
+                title: "Backyard fetch tournament",
+                petName: "Rocco",
+                petKind: "dog",
+                host: "Miles",
+                duration: "12 min",
+                description: "Three rounds, one tennis ball, zero interest in returning it cleanly.",
+                live: false,
+                likes: 214,
+                viewers: 690,
+            }, idFactory),
+            createVideo({
+                title: "Breakfast chirp playlist",
+                petName: "Kiwi",
+                petKind: "bird",
+                host: "Sam",
+                duration: "Live now",
+                description: "Morning whistles from a cockatiel with strong opinions on cereal.",
+                live: true,
+                likes: 187,
+                viewers: 842,
+            }, idFactory),
         ],
     };
 }
 function isTheme(value) {
     return value === "system" || value === "light" || value === "dark";
 }
-function isItem(value) {
+function isPetKind(value) {
+    return petKinds.includes(value);
+}
+function isSelectedKind(value) {
+    return value === "all" || isPetKind(value);
+}
+function isVideo(value) {
     if (!value || typeof value !== "object")
         return false;
-    const item = value;
-    return (typeof item.id === "string" &&
-        typeof item.text === "string" &&
-        typeof item.done === "boolean");
+    const video = value;
+    return (typeof video.id === "string" &&
+        typeof video.title === "string" &&
+        typeof video.petName === "string" &&
+        isPetKind(video.petKind) &&
+        typeof video.host === "string" &&
+        typeof video.duration === "string" &&
+        typeof video.description === "string" &&
+        typeof video.live === "boolean" &&
+        typeof video.likes === "number" &&
+        Number.isFinite(video.likes) &&
+        typeof video.viewers === "number" &&
+        Number.isFinite(video.viewers));
 }
 export function parseStoredState(storedState, defaultState) {
     if (!storedState)
@@ -35,33 +82,35 @@ export function parseStoredState(storedState, defaultState) {
         return {
             appName: typeof parsed.appName === "string" ? parsed.appName : defaultState.appName,
             theme: isTheme(parsed.theme) ? parsed.theme : defaultState.theme,
-            items: Array.isArray(parsed.items) && parsed.items.every(isItem) ? parsed.items : defaultState.items,
+            selectedKind: isSelectedKind(parsed.selectedKind) ? parsed.selectedKind : defaultState.selectedKind,
+            videos: Array.isArray(parsed.videos) && parsed.videos.every(isVideo) ? parsed.videos : defaultState.videos,
         };
     }
     catch {
         return defaultState;
     }
 }
-export function updateItem(state, id, patch) {
+export function addVideo(state, video, idFactory = () => crypto.randomUUID()) {
+    const newVideo = createVideo({
+        ...video,
+        likes: 0,
+        viewers: video.live ? 1 : 0,
+    }, idFactory);
+    return { ...state, videos: [newVideo, ...state.videos] };
+}
+export function likeVideo(state, id) {
     return {
         ...state,
-        items: state.items.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+        videos: state.videos.map((video) => video.id === id ? { ...video, likes: video.likes + 1 } : video),
     };
 }
-export function removeItem(state, id) {
-    return {
-        ...state,
-        items: state.items.filter((item) => item.id !== id),
-    };
+export function setSelectedKind(state, selectedKind) {
+    return { ...state, selectedKind };
 }
-export function addItem(state, text, idFactory = () => crypto.randomUUID()) {
-    return {
-        ...state,
-        items: [createItem(text, false, idFactory), ...state.items],
-    };
-}
-export function clearDoneItems(state) {
-    return { ...state, items: state.items.filter((item) => !item.done) };
+export function getVisibleVideos(state) {
+    if (state.selectedKind === "all")
+        return state.videos;
+    return state.videos.filter((video) => video.petKind === state.selectedKind);
 }
 function initializeGoogleAnalytics() {
     const googleTagScript = document.createElement("script");
@@ -85,16 +134,22 @@ function getElement(selector, type) {
 function getElements() {
     return {
         appNameInput: getElement("#app-name", HTMLInputElement),
-        clearItemsButton: getElement("#clear-items", HTMLButtonElement),
-        itemCount: getElement("#item-count", HTMLElement),
-        itemForm: getElement("#item-form", HTMLFormElement),
-        itemInput: getElement("#item-input", HTMLInputElement),
-        itemList: getElement("#item-list", HTMLUListElement),
+        categorySelect: getElement("#category-select", HTMLSelectElement),
+        featuredCount: getElement("#featured-count", HTMLElement),
+        liveCount: getElement("#live-count", HTMLElement),
         navLinks: document.querySelectorAll(".nav a"),
         saveState: getElement("#save-state", HTMLElement),
         themeSelect: getElement("#theme-select", HTMLSelectElement),
         title: getElement(".topbar h1", HTMLHeadingElement),
+        videoForm: getElement("#video-form", HTMLFormElement),
+        videoGrid: getElement("#video-grid", HTMLElement),
     };
+}
+function formValue(formData, name) {
+    return String(formData.get(name) ?? "").trim();
+}
+function formatKind(kind) {
+    return kind === "small-pet" ? "Small pet" : kind.slice(0, 1).toUpperCase() + kind.slice(1);
 }
 function initializeApp() {
     initializeGoogleAnalytics();
@@ -104,86 +159,117 @@ function initializeApp() {
     let saveTimer;
     function saveState() {
         localStorage.setItem(storageKey, JSON.stringify(state));
-        elements.saveState.textContent = "Saved locally";
+        elements.saveState.textContent = "Saved";
         window.clearTimeout(saveTimer);
         saveTimer = window.setTimeout(() => {
-            elements.saveState.textContent = "Changes autosave";
+            elements.saveState.textContent = "Autosaves";
         }, 1600);
     }
     function applyTheme() {
         document.documentElement.dataset.theme = state.theme;
     }
-    function renderItems() {
-        elements.itemList.replaceChildren();
-        if (state.items.length === 0) {
+    function renderVideos() {
+        elements.videoGrid.replaceChildren();
+        const visibleVideos = getVisibleVideos(state);
+        if (visibleVideos.length === 0) {
             const emptyState = document.createElement("p");
             emptyState.className = "empty-state";
-            emptyState.textContent = "No items yet. Add one to start shaping this template.";
-            elements.itemList.append(emptyState);
+            emptyState.textContent = "No posts in this pet lane yet. Add one above.";
+            elements.videoGrid.append(emptyState);
             return;
         }
-        state.items.forEach((item) => {
-            const row = document.createElement("li");
-            row.className = "item-row";
-            row.dataset.done = String(item.done);
-            const checkbox = document.createElement("input");
-            checkbox.type = "checkbox";
-            checkbox.checked = item.done;
-            checkbox.ariaLabel = `Mark ${item.text} complete`;
-            checkbox.addEventListener("change", () => {
-                state = updateItem(state, item.id, { done: checkbox.checked });
+        visibleVideos.forEach((video) => {
+            const card = document.createElement("article");
+            card.className = "video-card";
+            const poster = document.createElement("div");
+            poster.className = "poster";
+            poster.dataset.kind = video.petKind;
+            const badge = document.createElement("span");
+            badge.className = video.live ? "badge live" : "badge";
+            badge.textContent = video.live ? "Live" : video.duration;
+            const avatar = document.createElement("span");
+            avatar.className = "pet-avatar";
+            avatar.textContent = video.petName.charAt(0).toUpperCase();
+            poster.append(badge, avatar);
+            const body = document.createElement("div");
+            body.className = "video-body";
+            const meta = document.createElement("p");
+            meta.className = "video-meta";
+            meta.textContent = `${formatKind(video.petKind)} hosted by ${video.host}`;
+            const heading = document.createElement("h3");
+            heading.textContent = video.title;
+            const description = document.createElement("p");
+            description.textContent = video.description;
+            const actions = document.createElement("div");
+            actions.className = "video-actions";
+            const watchButton = document.createElement("button");
+            watchButton.className = "button primary";
+            watchButton.type = "button";
+            watchButton.textContent = video.live ? "Watch live" : "Watch";
+            const likeButton = document.createElement("button");
+            likeButton.className = "button secondary";
+            likeButton.type = "button";
+            likeButton.textContent = `Like ${video.likes}`;
+            likeButton.addEventListener("click", () => {
+                state = likeVideo(state, video.id);
                 saveState();
                 render();
             });
-            const label = document.createElement("span");
-            label.textContent = item.text;
-            const removeButton = document.createElement("button");
-            removeButton.className = "icon-button";
-            removeButton.type = "button";
-            removeButton.ariaLabel = `Remove ${item.text}`;
-            removeButton.textContent = "x";
-            removeButton.addEventListener("click", () => {
-                state = removeItem(state, item.id);
-                saveState();
-                render();
-            });
-            row.append(checkbox, label, removeButton);
-            elements.itemList.append(row);
+            const viewers = document.createElement("span");
+            viewers.className = "viewer-count";
+            viewers.textContent = `${video.viewers.toLocaleString()} viewers`;
+            actions.append(watchButton, likeButton, viewers);
+            body.append(meta, heading, description, actions);
+            card.append(poster, body);
+            elements.videoGrid.append(card);
         });
     }
     function render() {
-        document.title = `${state.appName} App Template`;
+        document.title = `${state.appName} | Pet livestreams`;
         elements.title.textContent = state.appName;
         elements.appNameInput.value = state.appName;
         elements.themeSelect.value = state.theme;
-        elements.itemCount.textContent = String(state.items.length);
+        elements.categorySelect.value = state.selectedKind;
+        elements.featuredCount.textContent = String(state.videos.length);
+        elements.liveCount.textContent = String(state.videos.filter((video) => video.live).length);
         applyTheme();
-        renderItems();
+        renderVideos();
     }
     function updateCurrentNavLink() {
-        const currentHash = window.location.hash || "#overview";
+        const currentHash = window.location.hash || "#feed";
         elements.navLinks.forEach((link) => {
             link.setAttribute("aria-current", link.getAttribute("href") === currentHash ? "page" : "false");
         });
     }
-    elements.itemForm.addEventListener("submit", (event) => {
+    elements.videoForm.addEventListener("submit", (event) => {
         event.preventDefault();
-        const text = elements.itemInput.value.trim();
-        if (!text)
+        const formData = new FormData(elements.videoForm);
+        const petKind = formValue(formData, "pet-kind");
+        if (!isPetKind(petKind))
             return;
-        state = addItem(state, text);
+        state = addVideo(state, {
+            title: formValue(formData, "title"),
+            petName: formValue(formData, "pet-name"),
+            petKind,
+            host: formValue(formData, "host"),
+            duration: formData.has("live") ? "Live now" : "8 min",
+            description: formValue(formData, "description"),
+            live: formData.has("live"),
+        });
         saveState();
         render();
-        elements.itemInput.value = "";
-        elements.itemInput.focus();
+        elements.videoForm.reset();
+        getElement("#title", HTMLInputElement).focus();
     });
-    elements.clearItemsButton.addEventListener("click", () => {
-        state = clearDoneItems(state);
+    elements.categorySelect.addEventListener("change", () => {
+        if (!isSelectedKind(elements.categorySelect.value))
+            return;
+        state = setSelectedKind(state, elements.categorySelect.value);
         saveState();
         render();
     });
     elements.appNameInput.addEventListener("input", () => {
-        state = { ...state, appName: elements.appNameInput.value.trim() || "Cordia" };
+        state = { ...state, appName: elements.appNameInput.value.trim() || "Pawcast" };
         saveState();
         render();
     });
