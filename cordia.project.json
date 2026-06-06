@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "generatedBy": "cordia",
+  "updatedAt": "2026-06-06T13:53:49.333Z",
+  "project": {
+    "id": "onlypaws",
+    "handle": "onlypaws",
+    "title": "Onlypaws",
+    "summary": "A Livestream/video website for people to post videos of their pets",
+    "url": "https://cordia.molten.bot/project/onlypaws"
+  },
+  "repo": {
+    "owner": "Molten-Bot",
+    "name": "cordia-onlypaws",
+    "fullName": "Molten-Bot/cordia-onlypaws"
+  }
+}
