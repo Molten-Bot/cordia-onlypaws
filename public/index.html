@@ -30,141 +30,151 @@
         <nav class="nav" aria-label="Primary">
           <a href="#feed" aria-current="page">Feed</a>
           <a href="#post">Post</a>
-          <a href="#settings">Settings</a>
         </nav>
       </header>
 
       <main id="main">
         <section class="hero" id="feed" aria-labelledby="hero-title">
           <div class="hero-copy">
-            <p class="eyebrow">Live rooms and replay clips</p>
-            <h2 id="hero-title">Post pet videos. Watch pets being pets.</h2>
+            <p class="eyebrow">Live pet streams</p>
+            <h2 id="hero-title">Pets live, one screen.</h2>
             <p>
-              Share livestreams, snack-time clips, nap cams, and backyard sessions in a
-              local-first feed built for pet people.
+              Watch real YouTube live rooms for cats, dogs, fish tanks, and backyard critter patrols.
             </p>
             <div class="hero-actions">
-              <a class="button primary" href="#post">Post video</a>
+              <a class="button primary" href="#browse">Watch now</a>
               <a class="button secondary" href="#browse">Browse feed</a>
             </div>
           </div>
           <div class="hero-preview" aria-label="Featured livestream preview">
             <div class="stream-frame">
+              <img
+                class="youtube-thumb"
+                src="https://i.ytimg.com/vi/34tfyR8mO9k/hqdefault.jpg"
+                alt=""
+                loading="lazy"
+              >
               <span class="badge live">Live</span>
-              <div class="play-mark" aria-hidden="true"></div>
+              <span class="play-mark" aria-hidden="true"></span>
             </div>
             <div class="preview-caption">
-              <strong>Sunny window nap cam</strong>
-              <span>1,240 watching</span>
+              <strong>Cat TV birds and squirrels</strong>
+              <span>Live on YouTube</span>
             </div>
           </div>
         </section>
 
-        <section class="stats-band" aria-label="Feed summary">
-          <div>
-            <strong id="live-count">0</strong>
-            <span>live rooms</span>
-          </div>
-          <div>
-            <strong id="featured-count">0</strong>
-            <span>featured posts</span>
-          </div>
-          <div>
-            <strong>5</strong>
-            <span>pet lanes</span>
-          </div>
-        </section>
+        <div class="content-grid">
+          <div class="feed-column">
+            <section class="stats-band" aria-label="Feed summary">
+              <div>
+                <strong id="live-count">0</strong>
+                <span>live rooms</span>
+              </div>
+              <div>
+                <strong id="featured-count">0</strong>
+                <span>featured posts</span>
+              </div>
+              <div>
+                <strong>5</strong>
+                <span>pet lanes</span>
+              </div>
+            </section>
 
-        <section class="toolbar" id="browse" aria-label="Browse controls">
-          <label class="field compact">
-            <span>Pet lane</span>
-            <select id="category-select">
-              <option value="all">All pets</option>
-              <option value="dog">Dogs</option>
-              <option value="cat">Cats</option>
-              <option value="bird">Birds</option>
-              <option value="small-pet">Small pets</option>
-              <option value="reptile">Reptiles</option>
-            </select>
-          </label>
-        </section>
+            <section class="toolbar" id="browse" aria-label="Browse controls">
+              <label class="field compact">
+                <span>Pet lane</span>
+                <select id="category-select">
+                  <option value="all">All pets</option>
+                  <option value="dog">Dogs</option>
+                  <option value="cat">Cats</option>
+                  <option value="bird">Birds</option>
+                  <option value="small-pet">Small pets</option>
+                  <option value="reptile">Reptiles</option>
+                </select>
+              </label>
+            </section>
 
-        <section class="video-grid" id="video-grid" aria-live="polite"></section>
-
-        <section class="post-panel" id="post" aria-labelledby="post-title">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">Post</p>
-              <h2 id="post-title">Add pet video</h2>
-            </div>
-            <span class="save-state" id="save-state" role="status">Saved</span>
+            <section class="video-grid" id="video-grid" aria-live="polite"></section>
           </div>
 
-          <form class="video-form" id="video-form">
-            <label class="field">
-              <span>Video title</span>
-              <input id="title" name="title" type="text" maxlength="80" placeholder="Park zoomies highlight" required>
-            </label>
-            <label class="field">
-              <span>Pet name</span>
-              <input name="pet-name" type="text" maxlength="40" placeholder="Miso" required>
-            </label>
-            <label class="field">
-              <span>Host</span>
-              <input name="host" type="text" maxlength="40" placeholder="Lena" required>
-            </label>
-            <label class="field">
-              <span>Pet kind</span>
-              <select name="pet-kind" required>
-                <option value="dog">Dog</option>
-                <option value="cat">Cat</option>
-                <option value="bird">Bird</option>
-                <option value="small-pet">Small pet</option>
-                <option value="reptile">Reptile</option>
-              </select>
-            </label>
-            <label class="field wide">
-              <span>Description</span>
-              <input
-                name="description"
-                type="text"
-                maxlength="140"
-                placeholder="Short context for viewers"
-                required
-              >
-            </label>
-            <label class="toggle">
-              <input name="live" type="checkbox" checked>
-              <span>Live now</span>
-            </label>
-            <button class="button primary" type="submit">Publish</button>
-          </form>
-        </section>
+          <aside class="side-panel">
+            <section class="post-panel" id="post" aria-labelledby="post-title">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow">Post</p>
+                  <h2 id="post-title">Add pet video</h2>
+                </div>
+                <span class="save-state" id="save-state" role="status">Saved</span>
+              </div>
 
-        <section class="settings-panel" id="settings" aria-labelledby="settings-title">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">Settings</p>
-              <h2 id="settings-title">Display</h2>
-            </div>
-          </div>
+              <form class="video-form" id="video-form">
+                <label class="field">
+                  <span>Video title</span>
+                  <input id="title" name="title" type="text" maxlength="80" placeholder="Park zoomies highlight" required>
+                </label>
+                <label class="field">
+                  <span>Pet name</span>
+                  <input name="pet-name" type="text" maxlength="40" placeholder="Miso" required>
+                </label>
+                <label class="field">
+                  <span>Host</span>
+                  <input name="host" type="text" maxlength="40" placeholder="Lena" required>
+                </label>
+                <label class="field">
+                  <span>Pet kind</span>
+                  <select name="pet-kind" required>
+                    <option value="dog">Dog</option>
+                    <option value="cat">Cat</option>
+                    <option value="bird">Bird</option>
+                    <option value="small-pet">Small pet</option>
+                    <option value="reptile">Reptile</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Description</span>
+                  <input
+                    name="description"
+                    type="text"
+                    maxlength="140"
+                    placeholder="Short context for viewers"
+                    required
+                  >
+                </label>
+                <label class="toggle">
+                  <input name="live" type="checkbox" checked>
+                  <span>Live now</span>
+                </label>
+                <button class="button primary" type="submit">Publish</button>
+              </form>
+            </section>
 
-          <div class="settings-grid">
-            <label class="field">
-              <span>App name</span>
-              <input id="app-name" type="text" maxlength="32" value="Pawcast">
-            </label>
+            <section class="settings-panel" id="settings" aria-labelledby="settings-title">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow">Settings</p>
+                  <h2 id="settings-title">Display</h2>
+                </div>
+              </div>
 
-            <label class="field">
-              <span>Theme</span>
-              <select id="theme-select">
-                <option value="system">System</option>
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-              </select>
-            </label>
-          </div>
-        </section>
+              <div class="settings-grid">
+                <label class="field">
+                  <span>App name</span>
+                  <input id="app-name" type="text" maxlength="32" value="Pawcast">
+                </label>
+
+                <label class="field">
+                  <span>Theme</span>
+                  <select id="theme-select">
+                    <option value="system">System</option>
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                  </select>
+                </label>
+              </div>
+            </section>
+          </aside>
+        </div>
       </main>
 
       <footer class="site-footer">

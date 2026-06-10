@@ -17,7 +17,18 @@ test("createDefaultState uses supplied id factory", () => {
 
   assert.deepEqual(
     state.videos.map((video) => video.id),
-    ["video-1", "video-2", "video-3"],
+    ["video-1", "video-2", "video-3", "video-4", "video-5"],
+  );
+});
+
+test("default videos use YouTube live pet streams", () => {
+  const state = createDefaultState(() => "seed");
+
+  assert.equal(state.videos.length, 5);
+  assert.ok(state.videos.every((video) => video.live));
+  assert.deepEqual(
+    state.videos.map((video) => video.youtubeId),
+    ["34tfyR8mO9k", "vroMtrHyb6g", "UEyEs8AE1ss", "wVWLrwqsq3c", "1HIuo_Roo6A"],
   );
 });
 
@@ -100,11 +111,11 @@ test("video reducers add, like, and filter immutably", () => {
     likes: 0,
     viewers: 1,
   });
-  assert.equal(state.videos.length, 3);
+  assert.equal(state.videos.length, 5);
   assert.equal(liked.videos[0].likes, 1);
   assert.deepEqual(
     getVisibleVideos(filtered).map((video) => video.petName),
-    ["Pepper"],
+    ["Pepper", "Critter yard"],
   );
 });
 

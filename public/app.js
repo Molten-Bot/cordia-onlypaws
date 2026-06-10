@@ -13,37 +13,69 @@ export function createDefaultState(idFactory = () => crypto.randomUUID()) {
         selectedKind: "all",
         videos: [
             createVideo({
-                title: "Nap cam from sunny window",
-                petName: "Miso",
+                title: "24/7 Live Cat TV: birds and squirrels",
+                petName: "Whisker lounge",
                 petKind: "cat",
-                host: "Lena",
+                host: "Birder King",
                 duration: "Live now",
-                description: "Slow blinks, stretch breaks, and occasional commentary from the sill.",
+                description: "Backyard birds and squirrels running all day for cats, dogs, and curious pets.",
                 live: true,
-                likes: 328,
-                viewers: 1240,
+                likes: 982,
+                viewers: 12400,
+                youtubeId: "34tfyR8mO9k",
+                youtubeUrl: "https://www.youtube.com/watch?v=34tfyR8mO9k",
             }, idFactory),
             createVideo({
-                title: "Backyard fetch tournament",
-                petName: "Rocco",
+                title: "Live puppy room cam",
+                petName: "Puppy pile",
                 petKind: "dog",
-                host: "Miles",
-                duration: "12 min",
-                description: "Three rounds, one tennis ball, zero interest in returning it cleanly.",
-                live: false,
-                likes: 214,
-                viewers: 690,
+                host: "Puppy Cam",
+                duration: "Live now",
+                description: "Real-time puppy pen watch with naps, play breaks, and toy chaos.",
+                live: true,
+                likes: 746,
+                viewers: 8300,
+                youtubeId: "vroMtrHyb6g",
+                youtubeUrl: "https://www.youtube.com/watch?v=vroMtrHyb6g",
             }, idFactory),
             createVideo({
-                title: "Breakfast chirp playlist",
-                petName: "Kiwi",
+                title: "No-ads live cat TV",
+                petName: "Window patrol",
                 petKind: "bird",
-                host: "Sam",
+                host: "Paul Dinning",
                 duration: "Live now",
-                description: "Morning whistles from a cockatiel with strong opinions on cereal.",
+                description: "Continuous bird and squirrel stream made for pets who watch from couch or perch.",
                 live: true,
-                likes: 187,
-                viewers: 842,
+                likes: 694,
+                viewers: 9100,
+                youtubeId: "UEyEs8AE1ss",
+                youtubeUrl: "https://www.youtube.com/watch?v=UEyEs8AE1ss",
+            }, idFactory),
+            createVideo({
+                title: "Cat TV aquarium live 24/7",
+                petName: "Tank watch",
+                petKind: "cat",
+                host: "Cat TV Aquarium",
+                duration: "Live now",
+                description: "Real fish glide through a live aquarium stream for cats and quiet pet rooms.",
+                live: true,
+                likes: 522,
+                viewers: 6400,
+                youtubeId: "wVWLrwqsq3c",
+                youtubeUrl: "https://www.youtube.com/watch?v=wVWLrwqsq3c",
+            }, idFactory),
+            createVideo({
+                title: "Live cat TV: birds, bunnies, squirrels",
+                petName: "Critter yard",
+                petKind: "small-pet",
+                host: "Outdoor Cat TV",
+                duration: "Live now",
+                description: "Small wildlife feed with motion and soft outdoor sound for pets at home.",
+                live: true,
+                likes: 438,
+                viewers: 5200,
+                youtubeId: "1HIuo_Roo6A",
+                youtubeUrl: "https://www.youtube.com/watch?v=1HIuo_Roo6A",
             }, idFactory),
         ],
     };
@@ -72,7 +104,9 @@ function isVideo(value) {
         typeof video.likes === "number" &&
         Number.isFinite(video.likes) &&
         typeof video.viewers === "number" &&
-        Number.isFinite(video.viewers));
+        Number.isFinite(video.viewers) &&
+        (video.youtubeId === undefined || typeof video.youtubeId === "string") &&
+        (video.youtubeUrl === undefined || typeof video.youtubeUrl === "string"));
 }
 export function parseStoredState(storedState, defaultState) {
     if (!storedState)
@@ -151,6 +185,9 @@ function formValue(formData, name) {
 function formatKind(kind) {
     return kind === "small-pet" ? "Small pet" : kind.slice(0, 1).toUpperCase() + kind.slice(1);
 }
+function youtubeThumbnailUrl(videoId) {
+    return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+}
 function initializeApp() {
     initializeGoogleAnalytics();
     const defaultState = createDefaultState();
@@ -182,15 +219,28 @@ function initializeApp() {
             const card = document.createElement("article");
             card.className = "video-card";
             const poster = document.createElement("div");
-            poster.className = "poster";
+            poster.className = video.youtubeId ? "poster has-video" : "poster";
             poster.dataset.kind = video.petKind;
             const badge = document.createElement("span");
             badge.className = video.live ? "badge live" : "badge";
             badge.textContent = video.live ? "Live" : video.duration;
-            const avatar = document.createElement("span");
-            avatar.className = "pet-avatar";
-            avatar.textContent = video.petName.charAt(0).toUpperCase();
-            poster.append(badge, avatar);
+            if (video.youtubeId) {
+                const thumbnail = document.createElement("img");
+                thumbnail.className = "youtube-thumb";
+                thumbnail.src = youtubeThumbnailUrl(video.youtubeId);
+                thumbnail.alt = "";
+                thumbnail.loading = "lazy";
+                const playMark = document.createElement("span");
+                playMark.className = "play-mark";
+                playMark.setAttribute("aria-hidden", "true");
+                poster.append(thumbnail, badge, playMark);
+            }
+            else {
+                const avatar = document.createElement("span");
+                avatar.className = "pet-avatar";
+                avatar.textContent = video.petName.charAt(0).toUpperCase();
+                poster.append(badge, avatar);
+            }
             const body = document.createElement("div");
             body.className = "video-body";
             const meta = document.createElement("p");
@@ -202,10 +252,12 @@ function initializeApp() {
             description.textContent = video.description;
             const actions = document.createElement("div");
             actions.className = "video-actions";
-            const watchButton = document.createElement("button");
+            const watchButton = document.createElement("a");
             watchButton.className = "button primary";
-            watchButton.type = "button";
-            watchButton.textContent = video.live ? "Watch live" : "Watch";
+            watchButton.href = video.youtubeUrl ?? `https://www.youtube.com/results?search_query=${encodeURIComponent(video.title)}`;
+            watchButton.target = "_blank";
+            watchButton.rel = "noopener noreferrer";
+            watchButton.textContent = video.live ? "Open live" : "Open";
             const likeButton = document.createElement("button");
             likeButton.className = "button secondary";
             likeButton.type = "button";
