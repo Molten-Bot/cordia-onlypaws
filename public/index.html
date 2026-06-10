@@ -40,8 +40,7 @@
             <p class="eyebrow">Live rooms and replay clips</p>
             <h2 id="hero-title">Post pet videos. Watch pets being pets.</h2>
             <p>
-              Share livestreams, snack-time clips, nap cams, and backyard sessions in a
-              local-first feed built for pet people.
+              Live pet streams, quiet cams, and favorite replays in one local-first feed.
             </p>
             <div class="hero-actions">
               <a class="button primary" href="#post">Post video</a>
@@ -50,11 +49,17 @@
           </div>
           <div class="hero-preview" aria-label="Featured livestream preview">
             <div class="stream-frame">
+              <iframe
+                src="https://www.youtube-nocookie.com/embed/UEyEs8AE1ss"
+                title="24/7 live cat TV bird and squirrel stream"
+                allow="accelerometer; autoplay; clipboard-write; compute-pressure; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen
+                loading="lazy"
+              ></iframe>
               <span class="badge live">Live</span>
-              <div class="play-mark" aria-hidden="true"></div>
             </div>
             <div class="preview-caption">
-              <strong>Sunny window nap cam</strong>
+              <strong>Cat TV: birds and squirrels</strong>
               <span>1,240 watching</span>
             </div>
           </div>
@@ -91,14 +96,14 @@
 
         <section class="video-grid" id="video-grid" aria-live="polite"></section>
 
-        <section class="post-panel" id="post" aria-labelledby="post-title">
-          <div class="section-heading">
+        <details class="post-panel" id="post">
+          <summary class="section-heading">
             <div>
               <p class="eyebrow">Post</p>
               <h2 id="post-title">Add pet video</h2>
             </div>
             <span class="save-state" id="save-state" role="status">Saved</span>
-          </div>
+          </summary>
 
           <form class="video-form" id="video-form">
             <label class="field">
@@ -139,15 +144,15 @@
             </label>
             <button class="button primary" type="submit">Publish</button>
           </form>
-        </section>
+        </details>
 
-        <section class="settings-panel" id="settings" aria-labelledby="settings-title">
-          <div class="section-heading">
+        <details class="settings-panel" id="settings">
+          <summary class="section-heading">
             <div>
               <p class="eyebrow">Settings</p>
               <h2 id="settings-title">Display</h2>
             </div>
-          </div>
+          </summary>
 
           <div class="settings-grid">
             <label class="field">
@@ -164,7 +169,7 @@
               </select>
             </label>
           </div>
-        </section>
+        </details>
       </main>
 
       <footer class="site-footer">

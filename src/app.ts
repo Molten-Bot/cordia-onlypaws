@@ -17,6 +17,7 @@ export interface PetVideo {
   live: boolean;
   likes: number;
   viewers: number;
+  youtubeId?: string;
 }
 
 export interface AppState {
@@ -32,7 +33,9 @@ interface AppElements {
   featuredCount: HTMLElement;
   liveCount: HTMLElement;
   navLinks: NodeListOf<HTMLAnchorElement>;
+  postPanel: HTMLDetailsElement;
   saveState: HTMLElement;
+  settingsPanel: HTMLDetailsElement;
   themeSelect: HTMLSelectElement;
   title: HTMLHeadingElement;
   videoForm: HTMLFormElement;
@@ -72,34 +75,52 @@ export function createDefaultState(idFactory: () => string = () => crypto.random
           live: true,
           likes: 328,
           viewers: 1240,
+          youtubeId: "UEyEs8AE1ss",
         },
         idFactory,
       ),
       createVideo(
         {
-          title: "Backyard fetch tournament",
-          petName: "Rocco",
+          title: "Puppy room live play",
+          petName: "Rescue pups",
           petKind: "dog",
-          host: "Miles",
-          duration: "12 min",
-          description: "Three rounds, one tennis ball, zero interest in returning it cleanly.",
-          live: false,
+          host: "Explore Dogs",
+          duration: "Live now",
+          description: "Puppies nap, tumble, and wander through a live kennel cam.",
+          live: true,
           likes: 214,
           viewers: 690,
+          youtubeId: "34tfyR8mO9k",
         },
         idFactory,
       ),
       createVideo(
         {
-          title: "Breakfast chirp playlist",
-          petName: "Kiwi",
+          title: "Bird feeder pet TV",
+          petName: "Backyard birds",
           petKind: "bird",
-          host: "Sam",
+          host: "Birder King",
           duration: "Live now",
-          description: "Morning whistles from a cockatiel with strong opinions on cereal.",
+          description: "4K bird and squirrel stream made for cats, dogs, and quiet desks.",
           live: true,
           likes: 187,
           viewers: 842,
+          youtubeId: "l1R-hDaEwuc",
+        },
+        idFactory,
+      ),
+      createVideo(
+        {
+          title: "Live pet room check-in",
+          petName: "Shelter friends",
+          petKind: "small-pet",
+          host: "Sanctuary cam",
+          duration: "Live now",
+          description: "Soft live-room watch with adoptable pets moving through their day.",
+          live: true,
+          likes: 143,
+          viewers: 512,
+          youtubeId: "vroMtrHyb6g",
         },
         idFactory,
       ),
@@ -134,7 +155,8 @@ function isVideo(value: unknown): value is PetVideo {
     typeof video.likes === "number" &&
     Number.isFinite(video.likes) &&
     typeof video.viewers === "number" &&
-    Number.isFinite(video.viewers)
+    Number.isFinite(video.viewers) &&
+    (video.youtubeId === undefined || typeof video.youtubeId === "string")
   );
 }
 
@@ -221,7 +243,9 @@ function getElements(): AppElements {
     featuredCount: getElement("#featured-count", HTMLElement),
     liveCount: getElement("#live-count", HTMLElement),
     navLinks: document.querySelectorAll<HTMLAnchorElement>(".nav a"),
+    postPanel: getElement("#post", HTMLDetailsElement),
     saveState: getElement("#save-state", HTMLElement),
+    settingsPanel: getElement("#settings", HTMLDetailsElement),
     themeSelect: getElement("#theme-select", HTMLSelectElement),
     title: getElement(".topbar h1", HTMLHeadingElement),
     videoForm: getElement("#video-form", HTMLFormElement),
@@ -286,7 +310,17 @@ function initializeApp() {
       avatar.className = "pet-avatar";
       avatar.textContent = video.petName.charAt(0).toUpperCase();
 
-      poster.append(badge, avatar);
+      if (video.youtubeId) {
+        const frame = document.createElement("iframe");
+        frame.src = `https://www.youtube-nocookie.com/embed/${video.youtubeId}`;
+        frame.title = video.title;
+        frame.allow = "accelerometer; autoplay; clipboard-write; compute-pressure; encrypted-media; gyroscope; picture-in-picture; web-share";
+        frame.allowFullscreen = true;
+        frame.loading = "lazy";
+        poster.append(frame, badge);
+      } else {
+        poster.append(badge, avatar);
+      }
 
       const body = document.createElement("div");
       body.className = "video-body";
@@ -304,9 +338,15 @@ function initializeApp() {
       const actions = document.createElement("div");
       actions.className = "video-actions";
 
-      const watchButton = document.createElement("button");
+      const watchButton = document.createElement(video.youtubeId ? "a" : "button");
       watchButton.className = "button primary";
-      watchButton.type = "button";
+      if (watchButton instanceof HTMLButtonElement) {
+        watchButton.type = "button";
+      } else {
+        watchButton.href = `https://www.youtube.com/watch?v=${video.youtubeId}`;
+        watchButton.target = "_blank";
+        watchButton.rel = "noopener noreferrer";
+      }
       watchButton.textContent = video.live ? "Watch live" : "Watch";
 
       const likeButton = document.createElement("button");
@@ -344,6 +384,8 @@ function initializeApp() {
 
   function updateCurrentNavLink() {
     const currentHash = window.location.hash || "#feed";
+    if (currentHash === "#post") elements.postPanel.open = true;
+    if (currentHash === "#settings") elements.settingsPanel.open = true;
     elements.navLinks.forEach((link) => {
       link.setAttribute("aria-current", link.getAttribute("href") === currentHash ? "page" : "false");
     });

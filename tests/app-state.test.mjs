@@ -17,7 +17,7 @@ test("createDefaultState uses supplied id factory", () => {
 
   assert.deepEqual(
     state.videos.map((video) => video.id),
-    ["video-1", "video-2", "video-3"],
+    ["video-1", "video-2", "video-3", "video-4"],
   );
 });
 
@@ -100,11 +100,11 @@ test("video reducers add, like, and filter immutably", () => {
     likes: 0,
     viewers: 1,
   });
-  assert.equal(state.videos.length, 3);
+  assert.equal(state.videos.length, 4);
   assert.equal(liked.videos[0].likes, 1);
   assert.deepEqual(
     getVisibleVideos(filtered).map((video) => video.petName),
-    ["Pepper"],
+    ["Pepper", "Shelter friends"],
   );
 });
 
