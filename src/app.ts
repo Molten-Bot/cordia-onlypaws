@@ -17,6 +17,7 @@ export interface PetVideo {
   live: boolean;
   likes: number;
   viewers: number;
+  youtubeId?: string;
 }
 
 export interface AppState {
@@ -72,6 +73,7 @@ export function createDefaultState(idFactory: () => string = () => crypto.random
           live: true,
           likes: 328,
           viewers: 1240,
+          youtubeId: "EvsLqQS_80E",
         },
         idFactory,
       ),
@@ -86,6 +88,7 @@ export function createDefaultState(idFactory: () => string = () => crypto.random
           live: false,
           likes: 214,
           viewers: 690,
+          youtubeId: "34tfyR8mO9k",
         },
         idFactory,
       ),
@@ -100,6 +103,22 @@ export function createDefaultState(idFactory: () => string = () => crypto.random
           live: true,
           likes: 187,
           viewers: 842,
+          youtubeId: "e9C9K8ltDfk",
+        },
+        idFactory,
+      ),
+      createVideo(
+        {
+          title: "Cozy pet stream",
+          petName: "Pebble",
+          petKind: "small-pet",
+          host: "Nora",
+          duration: "Live now",
+          description: "Quiet pet-room stream for easy background watching.",
+          live: true,
+          likes: 156,
+          viewers: 734,
+          youtubeId: "XsOU8JnEpNM",
         },
         idFactory,
       ),
@@ -134,7 +153,8 @@ function isVideo(value: unknown): value is PetVideo {
     typeof video.likes === "number" &&
     Number.isFinite(video.likes) &&
     typeof video.viewers === "number" &&
-    Number.isFinite(video.viewers)
+    Number.isFinite(video.viewers) &&
+    (video.youtubeId === undefined || typeof video.youtubeId === "string")
   );
 }
 
@@ -237,6 +257,22 @@ function formatKind(kind: PetKind): string {
   return kind === "small-pet" ? "Small pet" : kind.slice(0, 1).toUpperCase() + kind.slice(1);
 }
 
+function createYouTubeEmbed(video: PetVideo): HTMLIFrameElement {
+  const iframe = document.createElement("iframe");
+  iframe.className = "youtube-player";
+  iframe.src = `https://www.youtube-nocookie.com/embed/${video.youtubeId}?rel=0&modestbranding=1`;
+  iframe.title = `${video.title} video stream`;
+  iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+  iframe.allowFullscreen = true;
+  iframe.referrerPolicy = "strict-origin-when-cross-origin";
+  iframe.loading = "lazy";
+  return iframe;
+}
+
+function createYouTubeWatchUrl(video: PetVideo): string {
+  return `https://www.youtube.com/watch?v=${video.youtubeId}`;
+}
+
 function initializeApp() {
   initializeGoogleAnalytics();
 
@@ -282,11 +318,14 @@ function initializeApp() {
       badge.className = video.live ? "badge live" : "badge";
       badge.textContent = video.live ? "Live" : video.duration;
 
-      const avatar = document.createElement("span");
-      avatar.className = "pet-avatar";
-      avatar.textContent = video.petName.charAt(0).toUpperCase();
-
-      poster.append(badge, avatar);
+      if (video.youtubeId) {
+        poster.append(createYouTubeEmbed(video), badge);
+      } else {
+        const avatar = document.createElement("span");
+        avatar.className = "pet-avatar";
+        avatar.textContent = video.petName.charAt(0).toUpperCase();
+        poster.append(badge, avatar);
+      }
 
       const body = document.createElement("div");
       body.className = "video-body";
@@ -304,10 +343,18 @@ function initializeApp() {
       const actions = document.createElement("div");
       actions.className = "video-actions";
 
-      const watchButton = document.createElement("button");
-      watchButton.className = "button primary";
-      watchButton.type = "button";
-      watchButton.textContent = video.live ? "Watch live" : "Watch";
+      const watchControl = video.youtubeId
+        ? document.createElement("a")
+        : document.createElement("button");
+      watchControl.className = "button primary";
+      watchControl.textContent = video.live ? "Watch live" : "Watch";
+      if (watchControl instanceof HTMLAnchorElement) {
+        watchControl.href = createYouTubeWatchUrl(video);
+        watchControl.target = "_blank";
+        watchControl.rel = "noreferrer";
+      } else {
+        watchControl.type = "button";
+      }
 
       const likeButton = document.createElement("button");
       likeButton.className = "button secondary";
@@ -323,7 +370,7 @@ function initializeApp() {
       viewers.className = "viewer-count";
       viewers.textContent = `${video.viewers.toLocaleString()} viewers`;
 
-      actions.append(watchButton, likeButton, viewers);
+      actions.append(watchControl, likeButton, viewers);
       body.append(meta, heading, description, actions);
       card.append(poster, body);
       elements.videoGrid.append(card);
