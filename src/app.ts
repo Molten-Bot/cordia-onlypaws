@@ -17,6 +17,7 @@ export interface PetVideo {
   live: boolean;
   likes: number;
   viewers: number;
+  youtubeId: string;
 }
 
 export interface AppState {
@@ -47,6 +48,15 @@ declare global {
 }
 
 const petKinds: PetKind[] = ["dog", "cat", "bird", "small-pet", "reptile"];
+const youtubeIdsByPetKind: Record<PetKind, string> = {
+  dog: "34tfyR8mO9k",
+  cat: "EvsLqQS_80E",
+  bird: "e9C9K8ltDfk",
+  "small-pet": "XsOU8JnEpNM",
+  reptile: "XsOU8JnEpNM",
+};
+
+type StoredVideo = Omit<PetVideo, "youtubeId"> & { youtubeId?: string };
 
 function createVideo(
   video: Omit<PetVideo, "id">,
@@ -72,6 +82,7 @@ export function createDefaultState(idFactory: () => string = () => crypto.random
           live: true,
           likes: 328,
           viewers: 1240,
+          youtubeId: "EvsLqQS_80E",
         },
         idFactory,
       ),
@@ -86,6 +97,7 @@ export function createDefaultState(idFactory: () => string = () => crypto.random
           live: false,
           likes: 214,
           viewers: 690,
+          youtubeId: "34tfyR8mO9k",
         },
         idFactory,
       ),
@@ -100,6 +112,22 @@ export function createDefaultState(idFactory: () => string = () => crypto.random
           live: true,
           likes: 187,
           viewers: 842,
+          youtubeId: "e9C9K8ltDfk",
+        },
+        idFactory,
+      ),
+      createVideo(
+        {
+          title: "Cozy pet stream",
+          petName: "Pebble",
+          petKind: "small-pet",
+          host: "Nora",
+          duration: "Live now",
+          description: "Quiet pet-room stream for easy background watching.",
+          live: true,
+          likes: 156,
+          viewers: 734,
+          youtubeId: "XsOU8JnEpNM",
         },
         idFactory,
       ),
@@ -119,7 +147,11 @@ function isSelectedKind(value: unknown): value is AppState["selectedKind"] {
   return value === "all" || isPetKind(value);
 }
 
-function isVideo(value: unknown): value is PetVideo {
+function isYouTubeId(value: unknown): value is string {
+  return typeof value === "string" && /^[A-Za-z0-9_-]{11}$/.test(value);
+}
+
+function isStoredVideo(value: unknown): value is StoredVideo {
   if (!value || typeof value !== "object") return false;
   const video = value as Record<string, unknown>;
   return (
@@ -134,8 +166,25 @@ function isVideo(value: unknown): value is PetVideo {
     typeof video.likes === "number" &&
     Number.isFinite(video.likes) &&
     typeof video.viewers === "number" &&
-    Number.isFinite(video.viewers)
+    Number.isFinite(video.viewers) &&
+    (video.youtubeId === undefined || isYouTubeId(video.youtubeId))
   );
+}
+
+function normalizeStoredVideos(videos: unknown, defaultState: AppState): PetVideo[] {
+  if (!Array.isArray(videos) || !videos.every(isStoredVideo)) return defaultState.videos;
+
+  return videos.map((video, index) => {
+    const defaultById = defaultState.videos.find((defaultVideo) => defaultVideo.id === video.id);
+    const defaultByIndex = defaultState.videos[index];
+    const youtubeId =
+      video.youtubeId ??
+      defaultById?.youtubeId ??
+      (defaultByIndex?.petKind === video.petKind ? defaultByIndex.youtubeId : undefined) ??
+      youtubeIdsByPetKind[video.petKind];
+
+    return { ...video, youtubeId };
+  });
 }
 
 export function parseStoredState(storedState: string | null, defaultState: AppState): AppState {
@@ -147,7 +196,7 @@ export function parseStoredState(storedState: string | null, defaultState: AppSt
       appName: typeof parsed.appName === "string" ? parsed.appName : defaultState.appName,
       theme: isTheme(parsed.theme) ? parsed.theme : defaultState.theme,
       selectedKind: isSelectedKind(parsed.selectedKind) ? parsed.selectedKind : defaultState.selectedKind,
-      videos: Array.isArray(parsed.videos) && parsed.videos.every(isVideo) ? parsed.videos : defaultState.videos,
+      videos: normalizeStoredVideos(parsed.videos, defaultState),
     };
   } catch {
     return defaultState;
@@ -156,12 +205,13 @@ export function parseStoredState(storedState: string | null, defaultState: AppSt
 
 export function addVideo(
   state: AppState,
-  video: Omit<PetVideo, "id" | "likes" | "viewers">,
+  video: Omit<PetVideo, "id" | "likes" | "viewers" | "youtubeId"> & { youtubeId?: string },
   idFactory: () => string = () => crypto.randomUUID(),
 ): AppState {
   const newVideo = createVideo(
     {
       ...video,
+      youtubeId: isYouTubeId(video.youtubeId) ? video.youtubeId : youtubeIdsByPetKind[video.petKind],
       likes: 0,
       viewers: video.live ? 1 : 0,
     },
@@ -237,6 +287,22 @@ function formatKind(kind: PetKind): string {
   return kind === "small-pet" ? "Small pet" : kind.slice(0, 1).toUpperCase() + kind.slice(1);
 }
 
+function createYouTubeEmbed(video: PetVideo): HTMLIFrameElement {
+  const iframe = document.createElement("iframe");
+  iframe.className = "youtube-player";
+  iframe.src = `https://www.youtube-nocookie.com/embed/${video.youtubeId}?rel=0&modestbranding=1`;
+  iframe.title = `${video.title} video stream`;
+  iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+  iframe.allowFullscreen = true;
+  iframe.referrerPolicy = "strict-origin-when-cross-origin";
+  iframe.loading = "lazy";
+  return iframe;
+}
+
+function createYouTubeWatchUrl(video: PetVideo): string {
+  return `https://www.youtube.com/watch?v=${video.youtubeId}`;
+}
+
 function initializeApp() {
   initializeGoogleAnalytics();
 
@@ -282,11 +348,14 @@ function initializeApp() {
       badge.className = video.live ? "badge live" : "badge";
       badge.textContent = video.live ? "Live" : video.duration;
 
-      const avatar = document.createElement("span");
-      avatar.className = "pet-avatar";
-      avatar.textContent = video.petName.charAt(0).toUpperCase();
-
-      poster.append(badge, avatar);
+      if (video.youtubeId) {
+        poster.append(createYouTubeEmbed(video), badge);
+      } else {
+        const avatar = document.createElement("span");
+        avatar.className = "pet-avatar";
+        avatar.textContent = video.petName.charAt(0).toUpperCase();
+        poster.append(badge, avatar);
+      }
 
       const body = document.createElement("div");
       body.className = "video-body";
@@ -304,10 +373,18 @@ function initializeApp() {
       const actions = document.createElement("div");
       actions.className = "video-actions";
 
-      const watchButton = document.createElement("button");
-      watchButton.className = "button primary";
-      watchButton.type = "button";
-      watchButton.textContent = video.live ? "Watch live" : "Watch";
+      const watchControl = video.youtubeId
+        ? document.createElement("a")
+        : document.createElement("button");
+      watchControl.className = "button primary";
+      watchControl.textContent = video.live ? "Watch live" : "Watch";
+      if (watchControl instanceof HTMLAnchorElement) {
+        watchControl.href = createYouTubeWatchUrl(video);
+        watchControl.target = "_blank";
+        watchControl.rel = "noreferrer";
+      } else {
+        watchControl.type = "button";
+      }
 
       const likeButton = document.createElement("button");
       likeButton.className = "button secondary";
@@ -323,7 +400,7 @@ function initializeApp() {
       viewers.className = "viewer-count";
       viewers.textContent = `${video.viewers.toLocaleString()} viewers`;
 
-      actions.append(watchButton, likeButton, viewers);
+      actions.append(watchControl, likeButton, viewers);
       body.append(meta, heading, description, actions);
       card.append(poster, body);
       elements.videoGrid.append(card);
