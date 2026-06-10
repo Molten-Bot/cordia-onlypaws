@@ -54,6 +54,7 @@ test("parseStoredState merges valid stored values with defaults", () => {
         live: false,
         likes: 3,
         viewers: 12,
+        youtubeId: "34tfyR8mO9k",
       },
     ],
   });
@@ -74,9 +75,52 @@ test("parseStoredState merges valid stored values with defaults", () => {
         live: false,
         likes: 3,
         viewers: 12,
+        youtubeId: "34tfyR8mO9k",
       },
     ],
   });
+});
+
+test("parseStoredState migrates legacy stored videos to YouTube streams", () => {
+  const defaultState = createDefaultState(() => "default-id");
+  const stored = JSON.stringify({
+    appName: "Pet Room",
+    theme: "light",
+    selectedKind: "all",
+    videos: [
+      {
+        id: "legacy-cat",
+        title: "Legacy cat",
+        petName: "Miso",
+        petKind: "cat",
+        host: "Lena",
+        duration: "Live now",
+        description: "Stored before stream ids existed.",
+        live: true,
+        likes: 9,
+        viewers: 44,
+      },
+      {
+        id: "legacy-dog",
+        title: "Legacy dog",
+        petName: "Rocco",
+        petKind: "dog",
+        host: "Miles",
+        duration: "12 min",
+        description: "Stored before stream ids existed.",
+        live: false,
+        likes: 4,
+        viewers: 12,
+      },
+    ],
+  });
+
+  const state = parseStoredState(stored, defaultState);
+
+  assert.deepEqual(
+    state.videos.map((video) => video.youtubeId),
+    ["EvsLqQS_80E", "34tfyR8mO9k"],
+  );
 });
 
 test("parseStoredState falls back when stored JSON is invalid", () => {
@@ -112,6 +156,7 @@ test("video reducers add, like, and filter immutably", () => {
     duration: "Live now",
     description: "Fast laps through the cardboard course.",
     live: true,
+    youtubeId: "XsOU8JnEpNM",
     likes: 0,
     viewers: 1,
   });

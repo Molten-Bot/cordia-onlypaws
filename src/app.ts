@@ -17,7 +17,7 @@ export interface PetVideo {
   live: boolean;
   likes: number;
   viewers: number;
-  youtubeId?: string;
+  youtubeId: string;
 }
 
 export interface AppState {
@@ -48,6 +48,15 @@ declare global {
 }
 
 const petKinds: PetKind[] = ["dog", "cat", "bird", "small-pet", "reptile"];
+const youtubeIdsByPetKind: Record<PetKind, string> = {
+  dog: "34tfyR8mO9k",
+  cat: "EvsLqQS_80E",
+  bird: "e9C9K8ltDfk",
+  "small-pet": "XsOU8JnEpNM",
+  reptile: "XsOU8JnEpNM",
+};
+
+type StoredVideo = Omit<PetVideo, "youtubeId"> & { youtubeId?: string };
 
 function createVideo(
   video: Omit<PetVideo, "id">,
@@ -138,7 +147,11 @@ function isSelectedKind(value: unknown): value is AppState["selectedKind"] {
   return value === "all" || isPetKind(value);
 }
 
-function isVideo(value: unknown): value is PetVideo {
+function isYouTubeId(value: unknown): value is string {
+  return typeof value === "string" && /^[A-Za-z0-9_-]{11}$/.test(value);
+}
+
+function isStoredVideo(value: unknown): value is StoredVideo {
   if (!value || typeof value !== "object") return false;
   const video = value as Record<string, unknown>;
   return (
@@ -154,8 +167,24 @@ function isVideo(value: unknown): value is PetVideo {
     Number.isFinite(video.likes) &&
     typeof video.viewers === "number" &&
     Number.isFinite(video.viewers) &&
-    (video.youtubeId === undefined || typeof video.youtubeId === "string")
+    (video.youtubeId === undefined || isYouTubeId(video.youtubeId))
   );
+}
+
+function normalizeStoredVideos(videos: unknown, defaultState: AppState): PetVideo[] {
+  if (!Array.isArray(videos) || !videos.every(isStoredVideo)) return defaultState.videos;
+
+  return videos.map((video, index) => {
+    const defaultById = defaultState.videos.find((defaultVideo) => defaultVideo.id === video.id);
+    const defaultByIndex = defaultState.videos[index];
+    const youtubeId =
+      video.youtubeId ??
+      defaultById?.youtubeId ??
+      (defaultByIndex?.petKind === video.petKind ? defaultByIndex.youtubeId : undefined) ??
+      youtubeIdsByPetKind[video.petKind];
+
+    return { ...video, youtubeId };
+  });
 }
 
 export function parseStoredState(storedState: string | null, defaultState: AppState): AppState {
@@ -167,7 +196,7 @@ export function parseStoredState(storedState: string | null, defaultState: AppSt
       appName: typeof parsed.appName === "string" ? parsed.appName : defaultState.appName,
       theme: isTheme(parsed.theme) ? parsed.theme : defaultState.theme,
       selectedKind: isSelectedKind(parsed.selectedKind) ? parsed.selectedKind : defaultState.selectedKind,
-      videos: Array.isArray(parsed.videos) && parsed.videos.every(isVideo) ? parsed.videos : defaultState.videos,
+      videos: normalizeStoredVideos(parsed.videos, defaultState),
     };
   } catch {
     return defaultState;
@@ -176,12 +205,13 @@ export function parseStoredState(storedState: string | null, defaultState: AppSt
 
 export function addVideo(
   state: AppState,
-  video: Omit<PetVideo, "id" | "likes" | "viewers">,
+  video: Omit<PetVideo, "id" | "likes" | "viewers" | "youtubeId"> & { youtubeId?: string },
   idFactory: () => string = () => crypto.randomUUID(),
 ): AppState {
   const newVideo = createVideo(
     {
       ...video,
+      youtubeId: isYouTubeId(video.youtubeId) ? video.youtubeId : youtubeIdsByPetKind[video.petKind],
       likes: 0,
       viewers: video.live ? 1 : 0,
     },
